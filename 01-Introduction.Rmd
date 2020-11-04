@@ -1,0 +1,45 @@
+```{r setupintro, include=FALSE}
+rm(list = ls()) ; invisible(gc()) ; set.seed(42)
+library(knitr)
+library(kableExtra)
+if(knitr:::is_html_output()) options(knitr.table.format = "html") 
+if(knitr:::is_latex_output()) options(knitr.table.format = "latex") 
+library(tidyverse)
+theme_set(bayesplot::theme_default())
+opts_chunk$set(
+  echo = F, message = F, warning = F, fig.height = 6, fig.width = 8,
+  cache = T, cache.lazy = F)
+```
+
+# Introduction {-}
+
+## Background
+
+*Avicennia* germinans in French Guiana is capable of extraordinarily early flowering (after just 3 months) 
+and extraordinarily big growth (they grow to be 15m tall). 
+Elsewhere in the species distribution trees do not flower before several years and only grow to a few meters tall.
+*Avicennia* conquers newly formed mud banks pretty much in a single wave, 
+therefore all plants are more or less the same age (like *Cecropia*).
+And mud-banks have an unpredictable life-span (few days to few decades). 
+They grow hyper-densely, so very strong competition. 
+This should pose two opposing selective pressures: 
+early flowering favored in short lived mud-banks, 
+fast growth and competitive advantage in long lived mud-banks. 
+My hypothesis is that there may be genetic predisposition to either early flowering or fast growth. 
+
+*Niklas Tysklind*
+
+## Experiment design
+
+To have a first look at this question, we went to the mud-banks in Awala-Yalimapo, 
+established 12 plots of 5x5m with varying densities and average heights.
+We measured height, diameter, branching of all *Avicennia* trees  (i.e. somatic growth effort) in each plot, 
+then counted all inflorescence and fruits in each tree (i.e. reproductive growth effort).
+We got a total of ca. 400 trees.
+To get an estimate of the effect of competition in each tree we measured the distances to the 3 nearest neighbours of any species.
+
+*Niklas Tysklind*
+
+## Question
+
+Once we control for ontogeny and competition, is there still evidence that some individual have marked preferences (genetic predisposition) for either growth or reproduction?

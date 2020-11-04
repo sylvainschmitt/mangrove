@@ -1,0 +1,25 @@
+```{r setupmodel, include=FALSE}
+rm(list = ls()) ; invisible(gc()) ; set.seed(42)
+library(knitr)
+library(kableExtra)
+if(knitr:::is_html_output()) options(knitr.table.format = "html") 
+if(knitr:::is_latex_output()) options(knitr.table.format = "latex") 
+library(tidyverse)
+library(ggfortify)
+theme_set(bayesplot::theme_default())
+opts_chunk$set(
+  echo = F, message = F, warning = F, fig.height = 6, fig.width = 8,
+  cache = T, cache.lazy = F)
+```
+
+# Models
+
+This chapter develop all the models used to explore growth and reproductive variation linked to ontogeny and environment.
+
+## Summary
+
+I'm suggesting to partition variance between fixed and random effects of the following model for every $Trait$ (height, diameter, branches, fruits, and flowers):
+
+$$Trait \sim \mathcal N (\theta_0 + \theta_{soil} + \theta_{plot} + \theta_{date} \\+ \theta_{NCI}.NCI + \theta_{density}.density  + \theta_{soil}.soil \\ + \theta_{openness}.openness + \theta_{shore}.shore, \sigma_{Residual}) \\ \theta_{plot} \sim \mathcal N(0,\sigma_{plot}) \\ \theta_{date} \sim \mathcal N(0,\sigma_{date})$$
+
+
