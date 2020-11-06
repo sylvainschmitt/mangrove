@@ -19,14 +19,14 @@ This chapter introduce and explore explanatory variables correlations and relati
 
 ## Variables 
 
-*Renamed.*
-
+* **date**: date DD/MM/YYYYY
+* **time**: time HH
 * **plot**: plot
 * **id**: tree 
 * **height**: tree height in m
-* **d1**: ? in mm
-* **d2**: ? in mm
-* **diameter**: tree diameter in mm
+* **d1**: tree diameter at the base in mm
+* **d2**: second tree diameter at the the base orthogonal to d1 in mm
+* **diameter**: mean tree diameter in mm ($\frac{d1+d2}{2}$)
 * **branches**: number of branches in the tree
 * **fruits**: number of fruits in the tree
 * **flowers**:  number of flowers in the tree
@@ -36,12 +36,10 @@ This chapter introduce and explore explanatory variables correlations and relati
 * **nci3**: distance to the third closest tree in cm
 * **nci**: mean distance to the three closest trees in cm
 * **density**: plot tree density in $trees.m^2$
-* **date**: date DD/MM/YYYYY
-* **time**: time HH
-* **soil**: type of soil (1-4 ?)
-* **openness**: ?
 * **age**: maximum age in months
-* **shore**: distance from shore in m  
+* **shore**: distance from shore in m. *Distance from the shore is potentially correlated with two important non-measured variables: 1) age since the precise location in the mud-bank became available to the seed rain (nearer plots are likely older than further plots, though not necessarily); and 2) the amount of hours the sea is above that point (nearer plots are likely to be submerged fewer hours).* 
+* **soil**: qualitative approximate from mostly sandy (1) to deeply muddy (4)
+* **openness**: qualitative approximate of light that reached the soil from a not densely covered/ lot of light (1) to very densely covered and very little light reaching the bottom (4)
 
 ```{r}
 data <- read_tsv("data/mangrove_data.txt") %>% 
@@ -68,6 +66,23 @@ data <- read_tsv("data/mangrove_data.txt") %>%
                shore = `Distance(fromShore)`) %>% 
   mutate(time = as.numeric(gsub("h", "", time)))
 ```
+## Model types
+
+* **Lognormal regressions**: `height` and `diameter` are positive continuous measurements and followed a lognormal distribution
+* **Poisson exponential regressions**:  `branches`, `fruits` and `flowers` are count data and followed a Poisson distribution
+* **Bernoulli logistic regressions**: `pflower` is binary and followed a Bernoulli distribution
+
+```{r resphist}
+dplyr::select(data, 
+              height, diameter, branches, fruits, flowers, pflower) %>% 
+  reshape2::melt() %>% 
+  ggplot(aes(value)) +
+  geom_histogram(aes(y = ..density..)) +
+  geom_density() +
+  facet_wrap(~ variable, scales = "free")
+```
+
+
 
 ## Co-variations
 
@@ -78,10 +93,12 @@ which may simplify the analyses if we find similar results for the two performan
 NCI was correlated to both growth and reproduction.
 Soil was negatively correlated to growth.
 Openness was positively correlated to growth.
+Due to the high correlation between density and age ($r=0.74$, \@ref(fig:cor)),
+we will drop age from further analyses (density is more accurate).
 
 ```{r cor, fig.cap="Variables correlations. Pearson's r below the diagonal and corresponding color above the diagonal."}
 dplyr::select(data, 
-              height, diameter, branches, fruits, flowers, pflower, nci, density, soil, openness, age, shore) %>% 
+              height, diameter, branches, fruits, flowers, pflower, nci, density, age, shore, soil, openness) %>% 
   na.omit() %>%
   cor() %>% 
   corrplot::corrplot.mixed()
@@ -90,9 +107,11 @@ dplyr::select(data,
 ```{r pca, fig.cap="Principal component analysis of variables."}
 autoplot(princomp(~ height + diameter + branches + fruits + flowers + pflower + nci + density + soil + openness + age + shore,
                   data = data, cor = T),
-           loadings.label.size = 6,
-           loadings.label.colour = 'black', loadings.label.vjust = 1.1,
-           loadings = T, loadings.label = T, loadings.colour = 'black') +
+         col = "lightgrey", alpha = 0.5,
+         loadings.colour = "black",
+         loadings.label.size = 6, loadings.label.repel	= T,
+         loadings.label.colour = 'black', loadings.label.vjust = 1.1,
+         loadings = T, loadings.label = T) +
   geom_hline(aes(yintercept = 0), col = 'black', linetype = "dotted") +
   geom_vline(aes(xintercept = 0), col = 'black', linetype = "dotted")
 ```
@@ -101,21 +120,24 @@ autoplot(princomp(~ height + diameter + branches + fruits + flowers + pflower + 
 
 We explored relations among variables using:
 
-* **Response variables**: height, diameter, and branches for growth and fruits, flowers and pflower for reproduction
-* **Explanatory variables**: nci, density, soil, openness, age, and shore
-* **Random effects**: plot, date, and hour
+* **Response variables**: 
+    * **Growth**: height, diameter, and branches 
+    * **Reproduction**: fruits, flowers and pflower
+* **Explanatory variables**: 
+    * **Continuous**: nci, density, age, and shore
+    * **Qualitative**: soil, and openness 
+* **Random effects**: plot
 
 
-Figures \@ref(fig:lmplot) and \@ref(fig:oob) and table \@ref(tab:lmtab) showed explanatory variables relation to response variables.
-All explanatory variables had a significant linear effect on all response variables (**unexpected !**).
-Openness, competition, and distance to the shore were the most important variables to describe growth and reproduction (Fig. \@ref(fig:oob)).
-Explanatory variables explained 7 to 15% of variation in reproductive traits and 40 to 58% of variation in growth traits (Tab. \@ref(tab:lmtab)).
+Figures \@ref(fig:lmplotcontinuous), \@ref(fig:lmplotcategorial) and \@ref(fig:oob) and table \@ref(tab:lmtab) showed explanatory variables relation to response variables.
+All explanatory variables had a significant linear effect on all response variables (Fig. \@ref(fig:oob)).
+Explanatory variables explained 8 to 15% of variation in reproductive traits and 41 to 63% of variation in growth traits (Tab. \@ref(tab:lmtab)).
 
-```{r lmplot, fig.cap="Linear regressions per explanatory variables."}
+```{r lmplotcontinuous, fig.cap="Relations for continuous explanatory variables."}
 dplyr::select(data,
               id,
               height, diameter, branches, fruits, flowers, pflower, # response variables
-              nci, density, soil, openness, age, shore # explanatory variables
+              nci, density, shore # explanatory variables continuous
               ) %>% 
   reshape2::melt(id.vars = c("id", "height", "diameter", "branches", "fruits", "flowers", "pflower"),
                  variable.name = "explanatory", value.name = "explanatory.value") %>% 
@@ -124,37 +146,36 @@ dplyr::select(data,
   ggplot(aes(x = explanatory.value, y = response.value)) +
   geom_point() +
   facet_grid(response ~ explanatory, scales = "free") +
-  geom_smooth(method = "lm") +
+  geom_smooth() +
   xlab("Explanatory") + ylab("Response")
 ```
 
-```{r lmtab}
+```{r lmplotcategorial, fig.cap="Relations for categorial explanatory variables."}
 dplyr::select(data,
               id,
               height, diameter, branches, fruits, flowers, # response variables
-              nci, density, soil, openness, age, shore # explanatory variables
+              soil, openness # explanatory variables factor and random
               ) %>% 
-  reshape2::melt(id.vars = c("id", "nci", "density", "soil", "openness", "age", "shore")) %>% 
-  group_by(variable) %>%
-  mutate(soil = as.factor(soil)) %>% 
-  do(lm = broom::glance(lm(value ~ nci + density + soil + openness + age + shore, data = .))) %>% 
-  unnest(lm) %>% 
-  dplyr::select(variable, r.squared, adj.r.squared) %>% 
-  kable(col.names = c("Response", "$R^2$", "$R^2_{adj}$"),
-        caption = "Linear regressions per response variable.")
+  reshape2::melt(id.vars = c("id", "height", "diameter", "branches", "fruits", "flowers"),
+                 variable.name = "explanatory", value.name = "explanatory.value") %>% 
+    reshape2::melt(id.vars = c("id", "explanatory", "explanatory.value"),
+                 variable.name = "response", value.name = "response.value") %>% 
+  ggplot(aes(x = as.factor(explanatory.value), y = log(response.value))) +
+  geom_boxplot() +
+  facet_grid(response ~ explanatory, scales = "free") +
+  xlab("Explanatory") + ylab("Response")
 ```
-
 ```{r oob, fig.cap="Variable importance calculated with an out-of-bag method applied on a random forest. Variable importance is represented by the mean increase in mean square error (MSE)."}
 dplyr::select(data,
               id,
               height, diameter, branches, fruits, flowers, pflower, # response variables
-              nci, density, soil, openness, age, shore # explanatory variables
+              nci, density, soil, openness, shore # explanatory variables
               ) %>% 
-    reshape2::melt(id.vars = c("id", "nci", "density", "soil", "openness", "age", "shore"),
+    reshape2::melt(id.vars = c("id", "nci", "density", "soil", "openness", "shore"),
                    variable.name = "response") %>% 
   group_by(response) %>%
-  mutate(soil = as.factor(soil)) %>% 
-  do(oob= randomForest::randomForest(value ~ nci + density + soil + openness + age + shore,
+  mutate(soil = as.factor(soil), openness = as.factor(openness)) %>% 
+  do(oob= randomForest::randomForest(value ~ nci + density + soil + openness + shore,
                                      data = .,  na.action = na.omit,
                                      ntree = 1000, replace = F , importance = T,
                                      do.trace = F, keep.forest = T, keep.inbag = T)$importance %>% 

@@ -2,3 +2,5 @@ data
 .Rproj.user
 _book
 _bookdown_files
+.Rhistory
+save
