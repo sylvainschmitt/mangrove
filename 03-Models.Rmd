@@ -14,8 +14,6 @@ rstan_options(auto_write = TRUE)
 opts_chunk$set(
   echo = F, message = F, warning = F, fig.height = 6, fig.width = 8,
   cache = T, cache.lazy = F)
-load("save/fits.Rdata")
-fits <- c(fitN, fitP, fitB)
 ```
 
 ```{r mdata}
@@ -56,25 +54,6 @@ data <- read_tsv("data/mangrove_data.txt") %>%
   mutate_at(c("nci", "density", "shore"),
             as.vector) %>% 
   reshape2::melt(id.vars = c("id", "nci", "density", "shore", "soil", "openness", "plot", "plotNum"))
-
-mdata.tab <- data %>% 
-  group_by(variable) %>% 
-  do(mdata = list(
-    N = nrow(.),
-    S = max(.$soil),
-    O = max(.$openness),
-    P  = max(.$plotNum),
-    trait  = .$value,
-    nci  = .$nci,
-    density  = .$density,
-    shore  = .$shore,
-    soil  = .$soil,
-    openness  = .$openness,
-    plot  = .$plotNum
-  ))
-mdata <- mdata.tab$mdata
-names(mdata) <- mdata.tab$variable
-rm(mdata.tab)
 ```
 
 # Models
@@ -90,10 +69,8 @@ We used following variables:
     * **Qualitative**: soil, and openness 
 * **Random effects**: plot
 
-## Summary
-
-```{r, eval=F}
-filter(data, variable %in% c("height", "diameter")) %>% 
+```{r varpart, fig.cap="Variance partitionning for all models."}
+lm.res <- filter(data, variable %in% c("height", "diameter")) %>% 
   mutate(value = log(value)) %>% 
   group_by(variable) %>% 
   do(varpart = lm(value ~ nci + density + shore + as.factor(soil) + as.factor(openness), .) %>% 
@@ -105,18 +82,9 @@ filter(data, variable %in% c("height", "diameter")) %>%
   mutate(TotSq = sum(`Sum Sq`)) %>% 
   mutate(pctNum = round(`Sum Sq` / TotSq * 100)) %>% 
   mutate(pctTxt = paste0(pctNum, "%")) %>%
-  ggplot(aes(x = variable, fill = parameter)) +
-  geom_col(aes(y = pctNum)) +
-  geom_text(aes(y = pctNum, label = pctTxt), col = "white",
-            position = position_stack(vjust = .5)) +
-  theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
-        axis.line.x = element_blank(),
-        axis.ticks.x = element_blank()) +
-  viridis::scale_fill_viridis(expression(sigma^2), discrete = T)
-```
-
-```{r, eval=F}
-filter(data, variable %in% c("fruits", "flowers", "branches")) %>% 
+  mutate(parameter = ifelse(parameter == "Residuals", "residuals", parameter)) %>% 
+  dplyr::select(variable, parameter, pctNum, pctTxt)
+poisson.res <- filter(data, variable %in% c("fruits", "flowers", "branches")) %>% 
   group_by(variable) %>% 
   do(varpart = glm(value ~ nci + density + shore + as.factor(soil) + as.factor(openness), 
       family = poisson, .) %>% 
@@ -128,20 +96,10 @@ filter(data, variable %in% c("fruits", "flowers", "branches")) %>%
   mutate(TotDev = max(`Resid. Dev`)) %>% 
   mutate(pctNum = round(Deviance / TotDev * 100)) %>% 
   mutate(pctNum = ifelse(is.na(pctNum), 100 - sum(pctNum, na.rm = T), pctNum)) %>% 
-  mutate(parameter = ifelse(parameter == "NULL", "residual", parameter)) %>% 
-  mutate(pctTxt = paste0(pctNum, "%")) %>%
-  ggplot(aes(x = variable, fill = parameter)) +
-  geom_col(aes(y = pctNum)) +
-  geom_text(aes(y = pctNum, label = pctTxt), col = "white",
-            position = position_stack(vjust = .5)) +
-  theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
-        axis.line.x = element_blank(),
-        axis.ticks.x = element_blank()) +
-  viridis::scale_fill_viridis(expression(sigma^2), discrete = T)
-```
-
-```{r, eval=F}
-filter(data, variable %in% c("pflower")) %>% 
+  mutate(parameter = ifelse(parameter == "NULL", "residuals", parameter)) %>% 
+  mutate(pctTxt = paste0(pctNum, "%")) %>%  
+  dplyr::select(variable, parameter, pctNum, pctTxt)
+binomial.res <- filter(data, variable %in% c("pflower")) %>% 
   group_by(variable) %>% 
   do(varpart = glm(value ~ nci + density + shore + as.factor(soil) + as.factor(openness), 
       family = binomial, .) %>% 
@@ -153,25 +111,10 @@ filter(data, variable %in% c("pflower")) %>%
   mutate(TotDev = max(`Resid. Dev`)) %>% 
   mutate(pctNum = round(Deviance / TotDev * 100)) %>% 
   mutate(pctNum = ifelse(is.na(pctNum), 100 - sum(pctNum, na.rm = T), pctNum)) %>% 
-  mutate(parameter = ifelse(parameter == "NULL", "residual", parameter)) %>% 
-  mutate(pctTxt = paste0(pctNum, "%")) %>%
-  ggplot(aes(x = variable, fill = parameter)) +
-  geom_col(aes(y = pctNum)) +
-  geom_text(aes(y = pctNum, label = pctTxt), col = "white",
-            position = position_stack(vjust = .5)) +
-  theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
-        axis.line.x = element_blank(),
-        axis.ticks.x = element_blank()) +
-  viridis::scale_fill_viridis(expression(sigma^2), discrete = T)
-```
-
-
-```{r varpart, fig.cap="Variance partitionning for all models."}
-lapply(fits, mcmc_intervals_data, regex_pars = c("V")) %>% 
-  bind_rows(.id = "variable") %>% 
-  group_by(variable) %>% 
-  mutate(pctNum = round(m / sum(m) * 100)) %>%
-  mutate(pctTxt = paste0(pctNum, "%")) %>%
+  mutate(parameter = ifelse(parameter == "NULL", "residuals", parameter)) %>% 
+  mutate(pctTxt = paste0(pctNum, "%")) %>% 
+  dplyr::select(variable, parameter, pctNum, pctTxt)
+bind_rows(lm.res, poisson.res, binomial.res) %>% 
   ggplot(aes(x = variable, fill = parameter)) +
   geom_col(aes(y = pctNum)) +
   geom_text(aes(y = pctNum, label = pctTxt), col = "white",
@@ -183,232 +126,32 @@ lapply(fits, mcmc_intervals_data, regex_pars = c("V")) %>%
 ```
 
 ```{r residuals, fig.cap="Variance partitionning for all models."}
-lapply(fits, as.data.frame, pars = "residuals") %>%
-  bind_rows(.id = "variable") %>% 
-  reshape2::melt("variable", variable.name = "ind") %>% 
-  group_by(variable, ind) %>% 
-  summarise(residuals = mean(value)) %>% 
-  ggplot(aes(residuals))  + 
-  geom_histogram(aes(y = ..density..), col = "lightgrey", alpha = 0.5) +
-  geom_density() +
-  facet_wrap(~ variable, scales = "free")
-```
-
-## Variables & parameters
-
-Summary of all variables, and parameters choice and used in subsequent models.
-
-### Variables
-
-* $i$ individual ($I$)
-* $s$ soil ($S$)
-* $o$ openness ($O$)
-* $p$ plot ($P$)
-* $trait$ trait
-* $nci$ mean distance to the three closest trees
-* $density$ plot tree density
-* $shore$ distance from shore
-
-### Parameters
-
-* $\alpha$ trait origin
-* $\beta_{nci}$ slope of nci effect
-* $\beta_{density}$ slope of density effect
-* $\beta_{shore}$ slope of shore effect
-* $\delta_{soil}$ deviation from origin due to soil fixed effect
-* $\delta_{openness}$ deviation from origin due to openness fixed effect
-* $\gamma_{plot}$ plot random effect 
-* $\sigma_{plot}$ plot variation
-* $\sigma$ residual variation
-
-## Lognormal regressions
-
-$$\begin{align} Trait_{i, s, o, p, d} \sim \mathcal{logN}[log(&\alpha + \\ & \beta_{nci}.nci +  \beta_{density}.density + \beta_{shore}.shore \\ & \delta_{soil} +  \delta_{openness} + \\ & \gamma_{plot}), \sigma]\end{align}$$
-$$\gamma_{plot} \sim \mathcal{N}(0, \sigma_{plot})$$
-```{r LSampling, eval=FALSE}
-# modelL <- stan_model("model/lognorm.stan")
-# fitL <- lapply(mdata[c("height", "diameter")], function(m) sampling(modelL, m))
-modelN <- stan_model("model/norm.stan")
-fitN <- lapply(mdata[c("height", "diameter")], function(m) sampling(modelN, m))
-```
-
-```{r LTable}
-lapply(fitN, broom.mixed::tidyMCMC, 
-       pars = c("alpha", "beta_nci", "beta_density", "beta_shore", "delta_soil",  "delta_openness", "sigma_plot"),
-       ess = T, rhat = T, estimate.method = "median") %>% 
-  bind_rows(.id = "variable") %>% 
-    kable(caption = "Parameters estimate.",
-        col.names = c("Variable", "Parameter", "Estimate", "Standard error", "$\\hat R$", "$N_{eff}$"))
-```
-
-```{r LTrace, fig.cap="Traceplot of model parameters."}
-mcmc_trace(as.array(fitN$height, 
-                    pars = c("alpha", "beta_nci", "beta_density", "delta_soil",  "delta_openness", "sigma_plot", "sigma")),
-           np = nuts_params(fitN$height)) +
-  viridis::scale_color_viridis(discrete = T)
-```
-
-```{r LPairs, message=FALSE, fig.cap="Pairs of model parameters."}
-mcmc_pairs(as.array(fitN$height, 
-                    pars = c("alpha", "beta_nci", "beta_density", "sigma_plot")),
-           np = nuts_params(fitN$height))
-```
-
-```{r Lvarpart, fig.cap="Variance partitionning for the model."}
-lapply(fitN, mcmc_intervals_data, regex_pars = c("V")) %>%   
-  bind_rows(.id = "variable") %>% 
+lm.res <- filter(data, variable %in% c("height", "diameter")) %>% 
+  mutate(value = log(value)) %>% 
   group_by(variable) %>% 
-  mutate(pctNum = round(m / sum(m) * 100)) %>%
-  mutate(pctTxt = paste0(pctNum, "%")) %>%
-  ggplot(aes(x = variable, fill = parameter)) +
-  geom_col(aes(y = pctNum)) +
-  geom_text(aes(y = pctNum, label = pctTxt), col = "white",
-            position = position_stack(vjust = .5)) +
-  theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
-        axis.line.x = element_blank(),
-        axis.ticks.x = element_blank()) +
-  viridis::scale_fill_viridis(expression(sigma^2), discrete = T)
-```
-
-```{r Lresiduals, fig.cap="Variance partitionning for the model."}
-lapply(fitN, as.data.frame, pars = "residuals") %>%
-  bind_rows(.id = "variable") %>% 
-  reshape2::melt("variable", variable.name = "ind") %>% 
-  group_by(variable, ind) %>% 
-  summarise(residuals = mean(value)) %>% 
-  ggplot(aes(residuals))  + 
-  geom_histogram(aes(y = ..density..), col = "lightgrey", alpha = 0.5) +
-  geom_density() +
-  facet_wrap(~ variable, scales = "free")
-```
-
-## Poisson exponential regressions
-
-$$\begin{align} Trait_{i, s, o, p, d} \sim \mathcal{P}[exp(&\alpha + \\ & \beta_{nci}.nci +  \beta_{density}.density + \beta_{shore}.shore \\ & \delta_{soil} +  \delta_{openness} + \\ & \gamma_{plot})]\end{align}$$
-$$\gamma_{plot} \sim \mathcal{N}(0, \sigma_{plot})$$
-
-
-
-```{r PSampling, eval=FALSE}
-modelP <- stan_model("model/poisson.stan")
-fitP <- lapply(mdata[c("fruits", "flowers", "branches")], function(m) sampling(modelP, m))
-```
-
-```{r PTable}
-lapply(fitP, broom.mixed::tidyMCMC, 
-       pars = c("alpha", "beta_nci", "beta_density", "beta_shore", "delta_soil",  "delta_openness", "sigma_plot"),
-       ess = T, rhat = T, estimate.method = "median") %>% 
-  bind_rows(.id = "variable") %>% 
-    kable(caption = "Parameters estimate.",
-        col.names = c("Variable", "Parameter", "Estimate", "Standard error", "$\\hat R$", "$N_{eff}$"))
-```
-
-```{r PTrace, fig.cap="Traceplot of model parameters."}
-mcmc_trace(as.array(fitP$fruits, 
-                    pars = c("alpha", "beta_nci", "beta_density", "delta_soil",  "delta_openness", "sigma_plot")),
-           np = nuts_params(fitP$fruits)) +
-  viridis::scale_color_viridis(discrete = T)
-```
-
-```{r PPairs, message=FALSE, fig.cap="Pairs of model parameters."}
-mcmc_pairs(as.array(fitP$fruits, 
-                    pars = c("alpha", "beta_nci", "beta_density", "sigma_plot")),
-           np = nuts_params(fitP$fruits))
-```
-
-```{r Pvarpart, fig.cap="Variance partitionning for the model."}
-lapply(fitP, mcmc_intervals_data, regex_pars = c("V")) %>% 
-  bind_rows(.id = "variable") %>% 
+  do(residuals = lm(value ~ nci + density + shore + as.factor(soil) + as.factor(openness), .) %>% 
+       residuals() %>% 
+       as.tibble()) %>% 
+  unnest(residuals)
+poisson.res <- filter(data, variable %in% c("fruits", "flowers", "branches")) %>% 
   group_by(variable) %>% 
-  mutate(pctNum = round(m / sum(m) * 100)) %>%
-  mutate(pctTxt = paste0(pctNum, "%")) %>%
-  ggplot(aes(x = variable, fill = parameter)) +
-  geom_col(aes(y = pctNum)) +
-  geom_text(aes(y = pctNum, label = pctTxt), col = "white",
-            position = position_stack(vjust = .5)) +
-  theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
-        axis.line.x = element_blank(),
-        axis.ticks.x = element_blank()) +
-  viridis::scale_fill_viridis(expression(sigma^2), discrete = T)
-```
-
-```{r Presiduals, fig.cap="Variance partitionning for the model."}
-lapply(fitP, as.data.frame, pars = "residuals") %>%
-  bind_rows(.id = "variable") %>% 
-  reshape2::melt("variable", variable.name = "ind") %>% 
-  group_by(variable, ind) %>% 
-  summarise(residuals = mean(value)) %>% 
-  ggplot(aes(residuals))  + 
-  geom_histogram(aes(y = ..density..), col = "lightgrey", alpha = 0.5) +
-  geom_density() +
-  facet_wrap(~ variable, scales = "free", nrow = 3)
-```
-
-## Bernoulli logistic regressions
-
-$$\begin{align} Trait_{i, s, o, p, d} \sim \mathcal{B}[logit(&\alpha + \\ & \beta_{nci}.nci +  \beta_{density}.density + \beta_{shore}.shore \\ & \delta_{soil} +  \delta_{openness} + \\ & \gamma_{plot})]\end{align}$$
-$$\gamma_{plot} \sim \mathcal{N}(0, \sigma_{plot})$$
-
-```{r BSampling, eval=FALSE}
-modelB <- stan_model("model/bernoulli.stan")
-fitB <- lapply(mdata["pflower"], function(m) sampling(modelB, m))
-```
-
-```{r BTable}
-lapply(fitB, broom.mixed::tidyMCMC, 
-       pars = c("alpha", "beta_nci", "beta_density", "beta_shore", "delta_soil",  "delta_openness", "sigma_plot"),
-       ess = T, rhat = T, estimate.method = "median") %>% 
-  bind_rows(.id = "variable") %>% 
-    kable(caption = "Parameters estimate.",
-        col.names = c("Variable", "Parameter", "Estimate", "Standard error", "$\\hat R$", "$N_{eff}$"))
-```
-
-```{r BTrace, fig.cap="Traceplot of model parameters."}
-mcmc_trace(as.array(fitB$pflower, 
-                    pars = c("alpha", "beta_nci", "beta_density", "delta_soil",  "delta_openness", "sigma_plot")),
-           np = nuts_params(fitB$pflower)) +
-  viridis::scale_color_viridis(discrete = T)
-```
-
-```{r BPairs, message=FALSE, fig.cap="Pairs of model parameters."}
-mcmc_pairs(as.array(fitB$pflower, 
-                    pars = c("alpha", "beta_nci", "beta_density", "sigma_plot")),
-           np = nuts_params(fitB$pflower))
-```
-
-```{r Bvarpart, fig.cap="Variance partitionning for the model."}
-lapply(fitB, mcmc_intervals_data, regex_pars = c("V")) %>% 
-  bind_rows(.id = "variable") %>% 
+  do(residuals = glm(value ~ nci + density + shore + as.factor(soil) + as.factor(openness), 
+      family = poisson, .) %>% 
+      residuals() %>% 
+       as.tibble()) %>% 
+  unnest(residuals)
+binomial.res <- filter(data, variable %in% c("pflower")) %>% 
   group_by(variable) %>% 
-  mutate(pctNum = round(m / sum(m) * 100)) %>%
-  mutate(pctTxt = paste0(pctNum, "%")) %>%
-  ggplot(aes(x = variable, fill = parameter)) +
-  geom_col(aes(y = pctNum)) +
-  geom_text(aes(y = pctNum, label = pctTxt), col = "white",
-            position = position_stack(vjust = .5)) +
-  theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
-        axis.line.x = element_blank(),
-        axis.ticks.x = element_blank()) +
-  viridis::scale_fill_viridis(expression(sigma^2), discrete = T)
-```
-
-```{r Bresiduals, fig.cap="Variance partitionning for the model."}
-lapply(fitB, as.data.frame, pars = "residuals") %>%
-  bind_rows(.id = "variable") %>% 
-  reshape2::melt("variable", variable.name = "ind") %>% 
-  group_by(variable, ind) %>% 
-  summarise(residuals = mean(value)) %>% 
-  ggplot(aes(residuals))  + 
+  do(residuals = glm(value ~ nci + density + shore + as.factor(soil) + as.factor(openness), 
+                     family = binomial, .) %>% 
+       residuals() %>% 
+       as.tibble()) %>% 
+  unnest(residuals)
+bind_rows(lm.res, poisson.res, binomial.res) %>% 
+  group_by(variable) %>% 
+  ggplot(aes(value))  + 
   geom_histogram(aes(y = ..density..), col = "lightgrey", alpha = 0.5) +
   geom_density() +
-  facet_wrap(~ variable, scales = "free")
-```
-
-```{r fits, eval=F}
-save(
-  mdata,
-  fitN,
-  fitP,
-  fitB, 
-  file = "save/fits.Rdata")
+  facet_wrap(~ variable, scales = "free") +
+  xlab("residuals")
 ```
