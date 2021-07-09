@@ -1,3 +1,6 @@
+mangrove 1.0.0.9004
+* hierarchical modelling
+
 mangrove 1.0.9003
 * anibarosa
 

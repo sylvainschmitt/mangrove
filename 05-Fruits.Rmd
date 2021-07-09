@@ -1,4 +1,4 @@
-```{r setupflowers, include=FALSE, cache=F}
+```{r setupfruits, include=FALSE, cache=F}
 rm(list = ls()) ; invisible(gc()) ; set.seed(42)
 library(knitr)
 library(kableExtra)
@@ -19,7 +19,7 @@ opts_chunk$set(
 
 # Flowers
 
-```{r mdataflowers}
+```{r mdatafruits}
 data <- read_tsv("data/mangrove_data.txt") %>% 
   dplyr::rename(plot = `Placettes`,
                 id = `ID`,
@@ -56,7 +56,7 @@ data <- read_tsv("data/mangrove_data.txt") %>%
 mdata <- list(
   I = nrow(data),
   P = max(data$plotNum),
-  y = data$flowers,
+  y = data$fruits,
   height = data$height,
   nci = data$nci,
   density = data$density,
@@ -66,24 +66,24 @@ mdata <- list(
 
 ## Baseline model
 
-We start with a simple model in which we aim to model the number of flowers $flowers_{i,p}$ of each individual $i$ in plot $p$ as a function of its $height$ and neighbourhood crowding $nci$ with a random effect on the plot, such as:
+We start with a simple model in which we aim to model the number of flowers $fruits_{i,p}$ of each individual $i$ in plot $p$ as a function of its $height$ and neighbourhood crowding $nci$ with a random effect on the plot, such as:
 
-$$flowers_{i,p} \sim \mathcal Plog (\mu_p + \beta*nci_i)$$
+$$fruits_{i,p} \sim \mathcal Plog (\mu_p + \beta*nci_i)$$
 $$\mu_p \sim \mathcal N (\mu, \sigma)$$
 
 
-```{r baseFit, eval=FALSE}
+```{r baseFit2, eval=FALSE}
 m_base <- stan_model("model/base.stan")
 f_base <- sampling(m_base, mdata, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("count", "mu_p"))
-save(f_base, file = "save/base.Rdata")
+save(f_base, file = "save/base2.Rdata")
 ```
 
-```{r envOut}
-load("save/base.Rdata")
+```{r envOut2}
+load("save/base2.Rdata")
 cowplot::plot_grid(
   mcmc_trace(f_base, regex_pars = c("mu", "beta", "sigma")),
   mcmc_intervals(f_base, regex_pars = c("mu", "beta", "sigma")),
-  ppc_dens_overlay(y = data$flowers, as.matrix(f_base, pars = "prediction")[1:100, ]),
+  ppc_dens_overlay(y = data$fruits, as.matrix(f_base, pars = "prediction")[1:100, ]),
   nrow = 2
 )
 ```
@@ -92,18 +92,18 @@ cowplot::plot_grid(
 
 We are now adding an hidden state to the best model. Let's assume there are two genetically distinct types of individuals that can be differentiated based on their flowering date : early or late flowering. We want to identify individuals with the genetic potential of flowering earlier. Let's p be the probability of a late individual i and 1−p the probability of an early individual.
 
-$$flowers_{i,p} \sim \mathcal Plog (\mu_p^l + \beta*nci_i)$$
+$$fruits_{i,p} \sim \mathcal Plog (\mu_p^l + \beta*nci_i)$$
 $$\mu_p^l \sim \mathcal N (\mu^l, \sigma)$$
 $$l\in{1,2}|z_{i,p}\sim\mathcal B(p)$$
 
-```{r hierFit, eval=FALSE}
+```{r hierFit2, eval=FALSE}
 m_hier <- stan_model("model/hier.stan")
 f_hier <- sampling(m_hier, mdata, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("delta", "count"))
-save(f_hier, file = "save/hier.Rdata")
+save(f_hier, file = "save/hier2.Rdata")
 ```
 
-```{r hierOut}
-load("save/hier.Rdata")
+```{r hierOut2}
+load("save/hier2.Rdata")
 cowplot::plot_grid(
   mcmc_trace(f_hier, regex_pars = c("mu0", "diff", "beta", "sigma", "p$")),
   mcmc_intervals(f_hier, regex_pars = c("mu0", "diff", "beta", "alpha", "gamma", "sigma")),
@@ -113,34 +113,34 @@ cowplot::plot_grid(
 )
 ```
 
-```{r hierComp}
+```{r hierComp2}
 loo_compare(loo(f_base), loo(f_hier)) %>%
   kable()
 ```
 
 ## Hierarchical model with covariable
 
-$$flowers_{i,p} \sim \mathcal Plog (\mu_p^l + \beta*nci_i)$$
+$$fruits_{i,p} \sim \mathcal Plog (\mu_p^l + \beta*nci_i)$$
 $$\mu_p^l \sim \mathcal N (\mu^l, \sigma)$$
 $$l\in{1,2}|z_{i,p}\sim\mathcal B(\eta_0 + \gamma*shore_p)$$
 
-```{r hiercovFit, eval=FALSE}
+```{r hiercovFit2, eval=FALSE}
 m_hiercov <- stan_model("model/hiercov.stan")
 f_hiercov <- sampling(m_hiercov, mdata, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("delta", "count"))
-save(f_hiercov, file = "save/hiercov.Rdata")
+save(f_hiercov, file = "save/hiercov2.Rdata")
 ```
 
-```{r hiercovOut}
-load("save/hiercov.Rdata")
+```{r hiercovOut2}
+load("save/hiercov2.Rdata")
 cowplot::plot_grid(
   mcmc_trace(f_hiercov, regex_pars = c("mu0", "diff", "beta", "eta", "gamma", "sigma")),
   mcmc_intervals(f_hiercov, regex_pars = c("eta", "gamma", "mu0", "diff", "beta", "alpha", "gamma", "sigma")),
-  ppc_dens_overlay(y = data$flowers, as.matrix(f_hiercov, pars = "prediction")[1:100, ]),
+  ppc_dens_overlay(y = data$fruits, as.matrix(f_hiercov, pars = "prediction")[1:100, ]),
   nrow = 2
 )
 ```
 
-```{r hiercovComp}
+```{r hiercovComp2}
 loo_compare(loo(f_base), loo(f_hier), loo(f_hiercov)) %>% 
   kable()
 ```

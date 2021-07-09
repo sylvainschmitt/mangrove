@@ -5,3 +5,4 @@ _bookdown_files
 .Rhistory
 save
 .Rdata
+model/*.rds

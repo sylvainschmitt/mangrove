@@ -13,39 +13,37 @@ functions {
 }
 data {
   int<lower=1> I ; // number of individuals
-  int<lower=1> S ; // number of soil categories
-  int<lower=1> O ; // number of openness categories
   int<lower=1> P ; // number of plots
-  int<lower=0> y[I] ; // presence of flower
+  int<lower=0> y[I] ; // number of flowers
+  vector[I] height ; // tree height
   vector[I] nci ; // mean distance to the three closest trees
   vector[I] density ; // plot tree density
-  vector[I] shore ; // distance from shore
-  int<lower=1, upper=S> soil[I] ;
-  int<lower=1, upper=O> openness[I] ;
-  int<lower=1, upper=P> plot[I] ;
+  int<lower=1, upper=P> plot[I] ; // plots
 }
 parameters {
-  real<lower = 0.0, upper = 1.0> p;
+  real eta ;
+  real gamma ;
   real mu0 ; 
   real<lower = 0> diff ;
-  vector[3] beta ;
+  vector[2] beta ;
   vector[P] delta ;
   real<lower=0> sigma ;
 }
 transformed parameters {
   vector[2] mu ;
   vector[I] count[2] ;
+  vector[I] p = inv_logit(rep_vector(eta, I) + gamma*density) ;
   mu[1] = mu0 ;
-  mu[2] = beta[1] + diff ;
-  count[1] = mu[1] + delta[plot] +
-             beta[1]*nci + beta[2]*density + beta[3]*shore ;
-  count[2] = mu[2] + delta[plot] +
-             beta[1]*nci + beta[2]*density + beta[3]*shore ;
+  mu[2] = mu[1] + diff ;
+  count[1] = mu[1] + delta[plot] + beta[1]*height + beta[2]*nci ;
+  count[2] = mu[2] + delta[plot] + beta[1]*height + beta[2]*nci ;
 }
 model {
   for(i in 1:I) 
-    y[i] ~ TwoPoissonMixture_lpmf(p, to_vector(count[1:2, i])) ;
+    y[i] ~ TwoPoissonMixture_lpmf(p[i], to_vector(count[1:2, i])) ;
   delta ~ normal(0, sigma) ;
+  eta ~ normal(0, 1) ;
+  gamma ~ normal(0, 1) ;
   mu0 ~ normal(0, 1) ;
   diff ~ normal(0, 1) ;
   beta ~ normal(0, 1) ;
@@ -55,10 +53,10 @@ generated quantities {
   vector[I] log_lik ;
   vector[I] prediction ;
   for(i in 1:I){
-    log_lik[i] = log_sum_exp(log1m(p) + 
+    log_lik[i] = log_sum_exp(log1m(p[i]) + 
                              poisson_log_lpmf(y[i] | count[1, i]),
-                             log(p) + 
+                             log(p[i]) + 
                              poisson_log_lpmf(y[i] | count[2, i])) ;
-    prediction[i] = TwoPoissonMixture_rng(p, to_vector(count[1:2, i])) ;  
+    prediction[i] = TwoPoissonMixture_rng(p[i], to_vector(count[1:2, i])) ;  
   }
 }
