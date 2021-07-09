@@ -1,0 +1,272 @@
+```{r setupflowers, include=FALSE, cache=F}
+rm(list = ls()) ; invisible(gc()) ; set.seed(42)
+library(knitr)
+library(kableExtra)
+if(knitr:::is_html_output()) options(knitr.table.format = "html") 
+if(knitr:::is_latex_output()) options(knitr.table.format = "latex") 
+library(tidyverse)
+library(ggfortify)
+library(rstan)
+library(loo)
+library(bayesplot)
+theme_set(bayesplot::theme_default())
+options(mc.cores = 4)
+rstan_options(auto_write = TRUE)
+opts_chunk$set(
+  echo = F, message = F, warning = F, fig.height = 6, fig.width = 8,
+  cache = T, cache.lazy = F)
+```
+
+# Flowers
+
+```{r mdataflowers}
+data <- read_tsv("data/mangrove_data.txt") %>% 
+  dplyr::rename(plot = `Placettes`,
+                id = `ID`,
+                height = `Hauteur(m)`,
+                d1 = `Diametre1(mm)`,
+                d2 = `Diametre2(mm)`,
+                diameter = `Moyennediam(mm)`,
+                branches = `Branches(N)`,
+                fruits = `Fruits(N)`,
+                flowers = `Fleurs(N)`,
+                pflower= `Presencefleurs(1/0)`,
+                nci1 = `Competition_1(cm)`,
+                nci2 = `Competition_2(cm)`,
+                nci3 = `Competition_3(cm)`,
+                nci = `Moyennecompetition(cm)`,
+                density = `Densite(trees/m2)`,
+                date = `Date`,
+                time = `Heure`,
+                soil = `Typesol`,
+                openness = `Ouverture`,
+                age = `Agemax(months)`,
+                shore = `Distance(fromShore)`) %>% 
+  mutate(time = as.numeric(gsub("h", "", time))) %>% 
+  dplyr::select(
+    id,
+    flowers, fruits,
+    height, nci, density, plot
+  ) %>% 
+  mutate(plotNum = as.numeric(as.factor(plot))) %>% 
+  mutate_at(c("nci", "density"),
+            scale) %>% 
+  mutate_at(c("nci", "density"),
+            as.vector)
+mdata <- list(
+  I = nrow(data),
+  P = max(data$plotNum),
+  y = data$flowers,
+  height = data$height,
+  nci = data$nci,
+  density = data$density,
+  plot = data$plotNum
+)
+```
+
+## Baseline model
+
+We start with a simple model in which we aim to model the presence of flower $pflower_{i,o,s,p}$ of each individual $i$ as a function of its plot $p$, such as:
+
+$$pflower_{i,o,s,p} \sim \mathcal B (\mu_p)$$
+$$\mu_p \sim \mathcal N (\mu, \sigma_{plot})$$
+
+```{r nullFit, eval=FALSE}
+m_null <- stan_model("model/null.stan")
+f_null <- sampling(m_null, mdata, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("mu_p", "odd"))
+save(f_null, file = "save/null.Rdata")
+```
+
+```{r nullOut}
+load("save/null.Rdata")
+cowplot::plot_grid(
+  mcmc_trace(f_null, regex_pars = c("mu", "sigma")),
+  mcmc_intervals(f_null, regex_pars = c("mu", "sigma")),
+  ppc_dens_overlay(y = data$pflower, as.matrix(f_null, pars = "prediction")[1:100, ]),
+  nrow = 3
+)
+```
+
+## Environment model
+
+We start with a simple model in which we aim to model the presence of flower $pflower_{i,o,s,p}$ of each individual $i$ as a function of its neighbourhood crowding, its distance to shore, and its plot $p$, such as:
+
+$$pflower_{i,o,s,p} \sim \mathcal B (\mu_p + \beta_1*nci_i + \beta_2*density_p + \beta_3*shore_p)$$
+$$\mu_p \sim \mathcal N (\mu, \sigma_{plot})$$
+
+
+```{r envFit, eval=FALSE}
+m_env <- stan_model("model/env.stan")
+f_env <- sampling(m_env, mdata, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("mu_p", "odd"))
+save(f_env, file = "save/env.Rdata")
+```
+
+```{r envOut}
+load("save/env.Rdata")
+cowplot::plot_grid(
+  mcmc_trace(f_env, regex_pars = c("mu", "beta", "sigma")),
+  mcmc_intervals(f_env, regex_pars = c("mu", "beta", "sigma")),
+  ppc_dens_overlay(y = data$pflower, as.matrix(f_env, pars = "prediction")[1:100, ]),
+  nrow = 2
+)
+```
+
+```{r envComp}
+# loo_compare(waic(extract(f_null, "log_lik")$log_lik), waic(extract(f_env, "log_lik")$log_lik))
+loo_compare(loo(f_null), loo(f_env)) %>% 
+  kable()
+```
+
+## Random model
+
+We start with a simple model in which we aim to model the presence of flower $pflower_{i,o,s,p}$ of each individual $i$ as a function of its openness $o$, its soil $s$, its plot density, its neighbourhood crowding, its distance to shore, and its plot $p$, such as:
+
+$$pflower_{i,o,s,p} \sim \mathcal B (\mu_p + \alpha_o + \gamma_s + \beta_1*nci_i + \beta_2*density_p + \beta_3*shore_p)$$
+$$\mu_p \sim \mathcal N (\mu, \sigma_{plot})$$
+$$\alpha_o \sim \mathcal N (0, \sigma_{openness})$$
+$$\gamma_s \sim \mathcal N (0, \sigma_{soil})$$
+
+```{r randFit, eval=FALSE}
+m_rand <- stan_model("model/rand.stan")
+f_rand <- sampling(m_rand, mdata, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("mu_p", "odd"))
+save(f_rand, file = "save/rand.Rdata")
+```
+
+```{r randOut}
+load("save/rand.Rdata")
+cowplot::plot_grid(
+  mcmc_trace(f_rand, regex_pars = c("mu", "beta", "sigma")),
+  mcmc_intervals(f_rand, regex_pars = c("mu", "beta", "sigma")),
+  ppc_dens_overlay(y = data$pflower, as.matrix(f_rand, pars = "prediction")[1:100, ]),
+  nrow = 2
+)
+```
+
+```{r randComp}
+# loo_compare(waic(extract(f_null, "log_lik")$log_lik), waic(extract(f_env, "log_lik")$log_lik))
+loo_compare(loo(f_null), loo(f_env), loo(f_rand)) %>% 
+  kable()
+```
+
+## Covariable model
+
+We start with a simple model in which we aim to model the presence of flower $pflower_{i,o,s,p}$ of each individual $i$ as a function of its openness, its soil, its plot density, its neighbourhood crowding, its distance to shore, and its plot $p$, such as:
+
+$$pflower_{i,o,s,p} \sim \mathcal B (\mu_p + \beta_1*nci_i + \beta_2*density_p + \beta_3*shore_p + \beta_4*openness_i + \beta_5*soil_i)$$
+$$\mu_p \sim \mathcal N (\mu, \sigma_{plot})$$
+
+```{r covFit, eval=FALSE}
+m_cov <- stan_model("model/cov.stan")
+f_cov <- sampling(m_cov, mdata, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("mu_p", "odd"))
+save(f_cov, file = "save/cov.Rdata")
+```
+
+```{r covOut}
+load("save/cov.Rdata")
+cowplot::plot_grid(
+  mcmc_trace(f_cov, regex_pars = c("mu", "beta", "sigma")),
+  mcmc_intervals(f_cov, regex_pars = c("mu", "beta", "sigma")),
+  ppc_dens_overlay(y = data$pflower, as.matrix(f_cov, pars = "prediction")[1:100, ]),
+  nrow = 2
+)
+```
+
+```{r covComp}
+# loo_compare(waic(extract(f_null, "log_lik")$log_lik), waic(extract(f_env, "log_lik")$log_lik))
+loo_compare(loo(f_null), loo(f_env), loo(f_rand), loo(f_cov)) %>% 
+  kable()
+```
+
+## Fixed model
+
+We start with a simple model in which we aim to model the presence of flower $pflower_{i,o,s,p}$ of each individual $i$ as a function of its openness, its soil, its plot density, its neighbourhood crowding, its distance to shore, and its plot $p$, such as:
+
+We start with a simple model in which we aim to model the presence of flower $pflower_{i,o,s,p}$ of each individual $i$ as a function of its openness $o$, its soil $s$, its plot density, its neighbourhood crowding, its distance to shore, and its plot $p$, such as:
+
+$$pflower_{i,o,s,p} \sim \mathcal B (\mu_p + \alpha_o + \gamma_s + \beta_1*nci_i + \beta_2*density_p + \beta_3*shore_p)$$
+$$\mu_p \sim \mathcal N (\mu, \sigma_{plot})$$
+
+```{r fixedFit, eval=FALSE}
+m_fixed <- stan_model("model/fixed.stan")
+f_fixed <- sampling(m_fixed, mdata, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("mu_p", "odd"))
+save(f_fixed, file = "save/fixed.Rdata")
+```
+
+```{r fixedOut}
+load("save/fixed.Rdata")
+cowplot::plot_grid(
+  mcmc_trace(f_fixed, regex_pars = c("mu", "beta", "sigma")),
+  mcmc_intervals(f_fixed, regex_pars = c("mu", "beta", "alpha", "gamma", "sigma")),
+  ppc_dens_overlay(y = data$pflower, as.matrix(f_fixed, pars = "prediction")[1:100, ]),
+  nrow = 2
+)
+```
+
+```{r fixedComp}
+# loo_compare(waic(extract(f_null, "log_lik")$log_lik), waic(extract(f_env, "log_lik")$log_lik))
+loo_compare(loo(f_null), loo(f_env), loo(f_rand), loo(f_cov), loo(f_fixed)) %>% 
+  kable()
+```
+
+> In conclusion the simple environmental model is the best model.
+
+## Hierarchical model
+
+We are now adding an hidden state to the best model. Let's assume there are two genetically distinct types of individuals that can be differentiated based on their flowering date : early or late flowering. We want to identify individuals with the genetic potential of flowering earlier. Let's p be the probability of a late individual i and 1−p the probability of an early individual.
+
+$$pflower_{i,p} \sim \mathcal Blogit (\mu_p^l + \beta_1*nci_i + \beta_2*density_p + \beta_3*shore_p)$$
+$$\mu_p \sim \mathcal N (\mu^l, \sigma_{plot})$$
+
+$$l\in{1,2}|z_{i,p}\sim\mathcal B(p)$$
+
+```{r hierFit, eval=FALSE}
+m_hier <- stan_model("model/hier.stan")
+f_hier <- sampling(m_hier, mdata, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("mu_p", "odd"))
+save(f_hier, file = "save/hier.Rdata")
+```
+
+```{r hierOut}
+load("save/hier.Rdata")
+cowplot::plot_grid(
+  mcmc_trace(f_hier, regex_pars = c("mu0", "diff", "beta", "sigma")),
+  mcmc_intervals(f_hier, regex_pars = c("mu0", "diff", "beta", "alpha", "gamma", "sigma")),
+  ppc_dens_overlay(y = data$pflower, as.matrix(f_hier, pars = "prediction")[1:100, ]),
+  nrow = 2
+)
+```
+
+```{r hierComp}
+loo_compare(loo(f_null), loo(f_env), loo(f_rand), 
+            loo(f_cov), loo(f_fixed), loo(f_hier)) %>% 
+  kable()
+```
+
+## Hierarchical model with covariable
+
+We are now adding an hidden state to the best model. Let's assume there are two genetically distinct types of individuals that can be differentiated based on their flowering date : early or late flowering. We want to identify individuals with the genetic potential of flowering earlier. Let's p be the probability of a late individual i and 1−p the probability of an early individual.
+
+$$pflower_{i,p} \sim \mathcal B (\mu_p^l + \beta_1*nci_i + \beta_2*density_p)$$
+$$\mu_p \sim \mathcal N (\mu^l, \sigma_{plot})$$
+
+$$l\in{1,2}|z_{i,p}\sim\mathcal B(\eta_0 + \gamma*shore_p)$$
+```{r hiercovFit, eval=FALSE}
+m_hiercov <- stan_model("model/hiercov.stan")
+f_hiercov <- sampling(m_hiercov, mdata, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("mu_p", "odd"))
+save(f_hiercov, file = "save/hiercov.Rdata")
+```
+
+```{r hiercovOut}
+load("save/hiercov.Rdata")
+cowplot::plot_grid(
+  mcmc_trace(f_hiercov, regex_pars = c("mu0", "diff", "beta", "eta", "gamma", "sigma")),
+  mcmc_intervals(f_hiercov, regex_pars = c("eta", "gamma", "mu0", "diff", "beta", "alpha", "gamma", "sigma")),
+  ppc_dens_overlay(y = data$pflower, as.matrix(f_hiercov, pars = "prediction")[1:100, ]),
+  nrow = 2
+)
+```
+
+```{r hiercovComp}
+loo_compare(loo(f_null), loo(f_env), loo(f_rand), 
+            loo(f_cov), loo(f_fixed), loo(f_hier), loo(f_hiercov)) %>% 
+  kable()
+```

@@ -56,7 +56,7 @@ data <- read_tsv("data/mangrove_data.txt") %>%
   reshape2::melt(id.vars = c("id", "nci", "density", "shore", "soil", "openness", "plot", "plotNum"))
 ```
 
-# Models
+# Exploratory models
 
 This chapter develop all the models used to explore growth and reproductive variation linked to ontogeny and environment.
 We used following variables:
@@ -68,6 +68,9 @@ We used following variables:
     * **Continuous**: nci, density, and shore
     * **Qualitative**: soil, and openness 
 * **Random effects**: plot
+
+Most variation was related to openness, soil and neighbours (Fig. \@ref(fig:varpart)). 
+Nevertheless, the residual showed a high variation  (Fig. \@ref(fig:varpart)) and structure for `pflower` (Fig. \@ref(fig:residuals)).
 
 ```{r varpart, fig.cap="Variance partitionning for all models."}
 lm.res <- filter(data, variable %in% c("height", "diameter")) %>% 
@@ -125,7 +128,7 @@ bind_rows(lm.res, poisson.res, binomial.res) %>%
   viridis::scale_fill_viridis(expression(sigma^2), discrete = T)
 ```
 
-```{r residuals, fig.cap="Variance partitionning for all models."}
+```{r residuals, fig.cap="Residual for all models."}
 lm.res <- filter(data, variable %in% c("height", "diameter")) %>% 
   mutate(value = log(value)) %>% 
   group_by(variable) %>% 

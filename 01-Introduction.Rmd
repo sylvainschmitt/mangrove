@@ -15,7 +15,7 @@ opts_chunk$set(
 
 ## Background
 
-*Avicennia* germinans in French Guiana is capable of extraordinarily early flowering (after just 3 months) 
+*Avicennia germinans* in French Guiana is capable of extraordinarily early flowering (after just 3 months) 
 and extraordinarily big growth (they grow to be 15m tall). 
 Elsewhere in the species distribution trees do not flower before several years and only grow to a few meters tall.
 *Avicennia* conquers newly formed mud banks pretty much in a single wave, 
@@ -42,4 +42,4 @@ To get an estimate of the effect of competition in each tree we measured the dis
 
 ## Question
 
-Once we control for ontogeny and competition, is there still evidence that some individual have marked preferences (genetic predisposition) for either growth or reproduction?
+**Are individuals from *Avicennia germinans* structured in two distinct populations?**

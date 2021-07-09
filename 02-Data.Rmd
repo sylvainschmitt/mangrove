@@ -82,8 +82,6 @@ dplyr::select(data,
   facet_wrap(~ variable, scales = "free")
 ```
 
-
-
 ## Co-variations
 
 Figures \@ref(fig:cor) and \@ref(fig:pca) showed variables co-variations among them.
@@ -129,7 +127,7 @@ We explored relations among variables using:
 * **Random effects**: plot
 
 
-Figures \@ref(fig:lmplotcontinuous), \@ref(fig:lmplotcategorial) and \@ref(fig:oob) and table \@ref(tab:lmtab) showed explanatory variables relation to response variables.
+Figures \@ref(fig:lmplotcontinuous), \@ref(fig:lmplotcategorial) and \@ref(fig:oob) showed explanatory variables relation to response variables.
 All explanatory variables had a significant linear effect on all response variables (Fig. \@ref(fig:oob)).
 Explanatory variables explained 8 to 15% of variation in reproductive traits and 41 to 63% of variation in growth traits (Tab. \@ref(tab:lmtab)).
 

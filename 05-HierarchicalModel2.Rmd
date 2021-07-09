@@ -1,0 +1,132 @@
+```{r setuphiermodel2, include=FALSE, cache=F}
+rm(list = ls()) ; invisible(gc()) ; set.seed(42)
+library(knitr)
+library(kableExtra)
+if(knitr:::is_html_output()) options(knitr.table.format = "html") 
+if(knitr:::is_latex_output()) options(knitr.table.format = "latex") 
+library(tidyverse)
+library(ggfortify)
+library(rstan)
+library(loo)
+library(bayesplot)
+theme_set(bayesplot::theme_default())
+options(mc.cores = 4)
+rstan_options(auto_write = TRUE)
+opts_chunk$set(
+  echo = F, message = F, warning = F, fig.height = 6, fig.width = 8,
+  cache = T, cache.lazy = F)
+```
+
+# Hierarchical model - Normal
+
+```{r mdatahier2}
+data <- read_tsv("data/mangrove_data.txt") %>% 
+  dplyr::rename(plot = `Placettes`,
+                id = `ID`,
+                height = `Hauteur(m)`,
+                d1 = `Diametre1(mm)`,
+                d2 = `Diametre2(mm)`,
+                diameter = `Moyennediam(mm)`,
+                branches = `Branches(N)`,
+                fruits = `Fruits(N)`,
+                flowers = `Fleurs(N)`,
+                pflower= `Presencefleurs(1/0)`,
+                nci1 = `Competition_1(cm)`,
+                nci2 = `Competition_2(cm)`,
+                nci3 = `Competition_3(cm)`,
+                nci = `Moyennecompetition(cm)`,
+                density = `Densite(trees/m2)`,
+                date = `Date`,
+                time = `Heure`,
+                soil = `Typesol`,
+                openness = `Ouverture`,
+                age = `Agemax(months)`,
+                shore = `Distance(fromShore)`) %>% 
+  mutate(time = as.numeric(gsub("h", "", time))) %>% 
+  dplyr::select(
+    id,
+    height, diameter,
+    pflower,
+    nci, density, shore,
+    soil, openness,
+    plot
+  ) %>% 
+  mutate(plotNum = as.numeric(as.factor(plot))) %>% 
+  mutate_at(c("nci", "density", "shore"),
+            scale) %>% 
+  mutate_at(c("nci", "density", "shore"),
+            as.vector)
+mdata_height <- list(
+  I = nrow(data),
+  S = max(data$soil),
+  O = max(data$openness),
+  P = max(data$plotNum),
+  y = data$height,
+  nci = data$nci,
+  density = data$density,
+  shore = data$shore,
+  soil = data$soil,
+  openness = data$openness,
+  plot = data$plotNum
+)
+mdata_diameter <- list(
+  I = nrow(data),
+  S = max(data$soil),
+  O = max(data$openness),
+  P = max(data$plotNum),
+  y = data$diameter,
+  nci = data$nci,
+  density = data$density,
+  shore = data$shore,
+  soil = data$soil,
+  openness = data$openness,
+  plot = data$plotNum
+)
+```
+
+## Hierarchical model
+
+We are now adding an hidden state to the best model. Let's assume there are two genetically distinct types of individuals that can be differentiated based on their flowering date : early or late flowering. We want to identify individuals with the genetic potential of flowering earlier. Let's p be the probability of a late individual i and 1−p the probability of an early individual.
+
+$$log(y_{i,p}) \sim \mathcal N (\alpha_p^l + \beta_1*nci_i + \beta_2*density_p + \beta_3*shore_p, \sigma)$$
+$$\mu_p \sim \mathcal N (\alpha^l, \sigma_{plot})$$
+
+$$l\in{1,2}|z_{i,p}\sim\mathcal B(p)$$
+
+### Height
+
+```{r hierFitHeight, eval=FALSE}
+m_hierlog <- stan_model("model2/hierlog.stan")
+f_hierlog_height <- sampling(m_hierlog, mdata_height, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("mu_p", "odd"))
+save(f_hierlog_height, file = "save/hierlogheight.Rdata")
+```
+
+```{r hierOutHeight}
+load("save/hierlogheight.Rdata")
+cowplot::plot_grid(
+  mcmc_trace(f_hierlog_height, regex_pars = c("alpha0", "diff", "beta", "sigma")),
+  mcmc_intervals(f_hierlog_height, regex_pars = c("alpha0", "diff", "beta", "alpha", "gamma", "sigma")),
+  ppc_dens_overlay(y = data$height, as.matrix(f_hierlog_height, pars = "prediction")[1:100, ]),
+  nrow = 2
+)
+```
+
+### Diameter
+
+```{r hierFitDiameter, eval=FALSE}
+m_hierlog <- stan_model("model2/hierlog.stan")
+f_hierlog_diameter<- sampling(m_hierlog, mdata_diameter, save_warmup = F, chains = 2, cores = 2, include = F, pars = c("mu_p", "odd"))
+save(f_hierlog_diameter, file = "save/hierlogdiameter.Rdata")
+```
+
+```{r hierOutDiameter}
+load("save/hierlogdiameter.Rdata")
+cowplot::plot_grid(
+  mcmc_trace(f_hierlog_diameter, regex_pars = c("alpha0", "diff", "beta", "sigma")),
+  mcmc_intervals(f_hierlog_diameter, regex_pars = c("alpha0", "diff", "beta", "alpha", "gamma", "sigma")),
+  ppc_dens_overlay(y = data$diameter, as.matrix(f_hierlog_diameter, pars = "prediction")[1:100, ]),
+  nrow = 2
+)
+```
+
+
