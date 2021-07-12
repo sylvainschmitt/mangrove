@@ -22,7 +22,7 @@ data {
 }
 parameters {
   real eta ;
-  real gamma ;
+  real gamma[2] ;
   real mu0 ; 
   real<lower = 0> diff ;
   vector[2] beta ;
@@ -32,7 +32,7 @@ parameters {
 transformed parameters {
   vector[2] mu ;
   vector[I] count[2] ;
-  vector[I] p = inv_logit(rep_vector(eta, I) + gamma*density) ;
+  vector[I] p = inv_logit(rep_vector(eta, I) + gamma[1]*height + gamma[2]*density) ;
   mu[1] = mu0 ;
   mu[2] = mu[1] + diff ;
   count[1] = mu[1] + delta[plot] + beta[1]*height + beta[2]*nci ;

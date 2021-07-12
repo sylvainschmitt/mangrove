@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 3 Hierarchical full | Mangrove</title>
+  <meta name="description" content="Chapter 3 Hierarchical full | Mangrove exploratory analyses." />
+  <meta name="generator" content="bookdown 0.21 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 3 Hierarchical full | Mangrove" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Chapter 3 Hierarchical full | Mangrove exploratory analyses." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 3 Hierarchical full | Mangrove" />
+  
+  <meta name="twitter:description" content="Chapter 3 Hierarchical full | Mangrove exploratory analyses." />
+  
+
+<meta name="author" content="Sylvain Schmitt" />
+
+
+<meta name="date" content="2021-07-12" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="exploratory-models.html"/>
+<link rel="next" href="hierarchical-positive.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="html/style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Mangrove</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="" data-path="introduction.html"><a href="introduction.html"><i class="fa fa-check"></i>Introduction</a><ul>
+<li class="chapter" data-level="0.1" data-path="introduction.html"><a href="introduction.html#background"><i class="fa fa-check"></i><b>0.1</b> Background</a></li>
+<li class="chapter" data-level="0.2" data-path="introduction.html"><a href="introduction.html#experiment-design"><i class="fa fa-check"></i><b>0.2</b> Experiment design</a></li>
+<li class="chapter" data-level="0.3" data-path="introduction.html"><a href="introduction.html#question"><i class="fa fa-check"></i><b>0.3</b> Question</a></li>
+</ul></li>
+<li class="chapter" data-level="1" data-path="data.html"><a href="data.html"><i class="fa fa-check"></i><b>1</b> Data</a><ul>
+<li class="chapter" data-level="1.1" data-path="data.html"><a href="data.html#variables"><i class="fa fa-check"></i><b>1.1</b> Variables</a></li>
+<li class="chapter" data-level="1.2" data-path="data.html"><a href="data.html#model-types"><i class="fa fa-check"></i><b>1.2</b> Model types</a></li>
+<li class="chapter" data-level="1.3" data-path="data.html"><a href="data.html#co-variations"><i class="fa fa-check"></i><b>1.3</b> Co-variations</a></li>
+<li class="chapter" data-level="1.4" data-path="data.html"><a href="data.html#relations"><i class="fa fa-check"></i><b>1.4</b> Relations</a></li>
+<li class="chapter" data-level="1.5" data-path="data.html"><a href="data.html#conclusion"><i class="fa fa-check"></i><b>1.5</b> Conclusion</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="exploratory-models.html"><a href="exploratory-models.html"><i class="fa fa-check"></i><b>2</b> Exploratory models</a></li>
+<li class="chapter" data-level="3" data-path="hierarchical-full.html"><a href="hierarchical-full.html"><i class="fa fa-check"></i><b>3</b> Hierarchical full</a><ul>
+<li class="chapter" data-level="3.1" data-path="hierarchical-full.html"><a href="hierarchical-full.html#baseline-model"><i class="fa fa-check"></i><b>3.1</b> Baseline model</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="hierarchical-full.html"><a href="hierarchical-full.html#flowers"><i class="fa fa-check"></i><b>3.1.1</b> Flowers</a></li>
+<li class="chapter" data-level="3.1.2" data-path="hierarchical-full.html"><a href="hierarchical-full.html#fruits"><i class="fa fa-check"></i><b>3.1.2</b> Fruits</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="hierarchical-full.html"><a href="hierarchical-full.html#hierarchical-model"><i class="fa fa-check"></i><b>3.2</b> Hierarchical model</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="hierarchical-full.html"><a href="hierarchical-full.html#flowers-1"><i class="fa fa-check"></i><b>3.2.1</b> Flowers</a></li>
+<li class="chapter" data-level="3.2.2" data-path="hierarchical-full.html"><a href="hierarchical-full.html#fruits-1"><i class="fa fa-check"></i><b>3.2.2</b> Fruits</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="hierarchical-full.html"><a href="hierarchical-full.html#hierarchical-model-with-covariable"><i class="fa fa-check"></i><b>3.3</b> Hierarchical model with covariable</a><ul>
+<li class="chapter" data-level="3.3.1" data-path="hierarchical-full.html"><a href="hierarchical-full.html#flowers-2"><i class="fa fa-check"></i><b>3.3.1</b> Flowers</a></li>
+<li class="chapter" data-level="3.3.2" data-path="hierarchical-full.html"><a href="hierarchical-full.html#fruits-2"><i class="fa fa-check"></i><b>3.3.2</b> Fruits</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html"><i class="fa fa-check"></i><b>4</b> Hierarchical positive</a><ul>
+<li class="chapter" data-level="4.1" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html#baseline-model-1"><i class="fa fa-check"></i><b>4.1</b> Baseline model</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html#flowers-3"><i class="fa fa-check"></i><b>4.1.1</b> Flowers</a></li>
+<li class="chapter" data-level="4.1.2" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html#fruits-3"><i class="fa fa-check"></i><b>4.1.2</b> Fruits</a></li>
+</ul></li>
+<li class="chapter" data-level="4.2" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html#hierarchical-model-1"><i class="fa fa-check"></i><b>4.2</b> Hierarchical model</a><ul>
+<li class="chapter" data-level="4.2.1" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html#flowers-4"><i class="fa fa-check"></i><b>4.2.1</b> Flowers</a></li>
+<li class="chapter" data-level="4.2.2" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html#fruits-4"><i class="fa fa-check"></i><b>4.2.2</b> Fruits</a></li>
+<li class="chapter" data-level="4.2.3" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html#together"><i class="fa fa-check"></i><b>4.2.3</b> Together</a></li>
+</ul></li>
+<li class="chapter" data-level="4.3" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html#hierarchical-model-with-covariable-1"><i class="fa fa-check"></i><b>4.3</b> Hierarchical model with covariable</a><ul>
+<li class="chapter" data-level="4.3.1" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html#flowers-5"><i class="fa fa-check"></i><b>4.3.1</b> Flowers</a></li>
+<li class="chapter" data-level="4.3.2" data-path="hierarchical-positive.html"><a href="hierarchical-positive.html#fruits-5"><i class="fa fa-check"></i><b>4.3.2</b> Fruits</a></li>
+</ul></li>
+</ul></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="appendix-1-anibarosa.html"><a href="appendix-1-anibarosa.html"><i class="fa fa-check"></i><b>A</b> Appendix 1: Anibarosa</a><ul>
+<li class="chapter" data-level="A.1" data-path="appendix-1-anibarosa.html"><a href="appendix-1-anibarosa.html#data-1"><i class="fa fa-check"></i><b>A.1</b> Data</a></li>
+<li class="chapter" data-level="A.2" data-path="appendix-1-anibarosa.html"><a href="appendix-1-anibarosa.html#model"><i class="fa fa-check"></i><b>A.2</b> Model</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Mangrove</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="hierarchical-full" class="section level1">
+<h1><span class="header-section-number">Chapter 3</span> Hierarchical full</h1>
+<div id="baseline-model" class="section level2">
+<h2><span class="header-section-number">3.1</span> Baseline model</h2>
+<p>We start with a simple model in which we aim to model the number of flowers/fruits <span class="math inline">\(y_{i,p}\)</span> of each individual <span class="math inline">\(i\)</span> in plot <span class="math inline">\(p\)</span> as a function of its <span class="math inline">\(height\)</span> and neighbourhood crowding <span class="math inline">\(nci\)</span> with a random effect on the plot, such as:</p>
+<p><span class="math display">\[y_{i,p} \sim \mathcal Plog (\mu_p + \beta*nci_i)\]</span>
+<span class="math display">\[\mu_p \sim \mathcal N (\mu, \sigma)\]</span></p>
+<div id="flowers" class="section level3">
+<h3><span class="header-section-number">3.1.1</span> Flowers</h3>
+<p><img src="mangrove_files/figure-html/envOutFullFlowers-1.png" width="768" /></p>
+</div>
+<div id="fruits" class="section level3">
+<h3><span class="header-section-number">3.1.2</span> Fruits</h3>
+<p><img src="mangrove_files/figure-html/envOutFullFruits-1.png" width="768" /></p>
+</div>
+</div>
+<div id="hierarchical-model" class="section level2">
+<h2><span class="header-section-number">3.2</span> Hierarchical model</h2>
+<p>Let’s assume there are two genetically distinct types of individuals that can be differentiated based on their flowering date : early or late flowering. We want to identify individuals with the genetic potential of flowering earlier. Let’s p be the probability of a late individual i and 1−p the probability of an early individual.</p>
+<p><span class="math display">\[y_{i,p} \sim \mathcal Plog (\mu_p^l + \beta*nci_i)\]</span>
+<span class="math display">\[\mu_p^l \sim \mathcal N (\mu^l, \sigma)\]</span>
+<span class="math display">\[l\in{1,2}|z_{i,p}\sim\mathcal B(p)\]</span></p>
+<div id="flowers-1" class="section level3">
+<h3><span class="header-section-number">3.2.1</span> Flowers</h3>
+<p><img src="mangrove_files/figure-html/hierOutFullFlowers-1.png" width="768" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+elpd_diff
+</th>
+<th style="text-align:right;">
+se_diff
+</th>
+<th style="text-align:right;">
+elpd_loo
+</th>
+<th style="text-align:right;">
+se_elpd_loo
+</th>
+<th style="text-align:right;">
+p_loo
+</th>
+<th style="text-align:right;">
+se_p_loo
+</th>
+<th style="text-align:right;">
+looic
+</th>
+<th style="text-align:right;">
+se_looic
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+model2
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+-10790.14
+</td>
+<td style="text-align:right;">
+1962.935
+</td>
+<td style="text-align:right;">
+4546.560
+</td>
+<td style="text-align:right;">
+768.1791
+</td>
+<td style="text-align:right;">
+21580.28
+</td>
+<td style="text-align:right;">
+3925.870
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+model1
+</td>
+<td style="text-align:right;">
+-9587.187
+</td>
+<td style="text-align:right;">
+1796.41
+</td>
+<td style="text-align:right;">
+-20377.33
+</td>
+<td style="text-align:right;">
+3343.991
+</td>
+<td style="text-align:right;">
+1669.282
+</td>
+<td style="text-align:right;">
+303.8157
+</td>
+<td style="text-align:right;">
+40754.65
+</td>
+<td style="text-align:right;">
+6687.983
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="fruits-1" class="section level3">
+<h3><span class="header-section-number">3.2.2</span> Fruits</h3>
+<p><img src="mangrove_files/figure-html/hierOutFullFruits-1.png" width="768" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+elpd_diff
+</th>
+<th style="text-align:right;">
+se_diff
+</th>
+<th style="text-align:right;">
+elpd_loo
+</th>
+<th style="text-align:right;">
+se_elpd_loo
+</th>
+<th style="text-align:right;">
+p_loo
+</th>
+<th style="text-align:right;">
+se_p_loo
+</th>
+<th style="text-align:right;">
+looic
+</th>
+<th style="text-align:right;">
+se_looic
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+model2
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+-855.356
+</td>
+<td style="text-align:right;">
+94.0355
+</td>
+<td style="text-align:right;">
+132.7910
+</td>
+<td style="text-align:right;">
+28.66924
+</td>
+<td style="text-align:right;">
+1710.712
+</td>
+<td style="text-align:right;">
+188.0710
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+model1
+</td>
+<td style="text-align:right;">
+-910.8263
+</td>
+<td style="text-align:right;">
+184.2343
+</td>
+<td style="text-align:right;">
+-1766.182
+</td>
+<td style="text-align:right;">
+249.5163
+</td>
+<td style="text-align:right;">
+160.5949
+</td>
+<td style="text-align:right;">
+31.22343
+</td>
+<td style="text-align:right;">
+3532.365
+</td>
+<td style="text-align:right;">
+499.0326
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="hierarchical-model-with-covariable" class="section level2">
+<h2><span class="header-section-number">3.3</span> Hierarchical model with covariable</h2>
+<p><span class="math display">\[y_{i,p} \sim \mathcal Plog (\mu_p^l + \beta*nci_i)\]</span>
+<span class="math display">\[\mu_p^l \sim \mathcal N (\mu^l, \sigma)\]</span>
+<span class="math display">\[l\in{1,2}|z_{i,p}\sim\mathcal B(\eta_0 + \gamma*shore_p)\]</span></p>
+<div id="flowers-2" class="section level3">
+<h3><span class="header-section-number">3.3.1</span> Flowers</h3>
+<p><img src="mangrove_files/figure-html/hiercovOutFullFlowers-1.png" width="768" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+elpd_diff
+</th>
+<th style="text-align:right;">
+se_diff
+</th>
+<th style="text-align:right;">
+elpd_loo
+</th>
+<th style="text-align:right;">
+se_elpd_loo
+</th>
+<th style="text-align:right;">
+p_loo
+</th>
+<th style="text-align:right;">
+se_p_loo
+</th>
+<th style="text-align:right;">
+looic
+</th>
+<th style="text-align:right;">
+se_looic
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+model2
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+-10790.14
+</td>
+<td style="text-align:right;">
+1962.935
+</td>
+<td style="text-align:right;">
+4546.560
+</td>
+<td style="text-align:right;">
+768.1791
+</td>
+<td style="text-align:right;">
+21580.28
+</td>
+<td style="text-align:right;">
+3925.870
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+model3
+</td>
+<td style="text-align:right;">
+-1498.908
+</td>
+<td style="text-align:right;">
+693.0721
+</td>
+<td style="text-align:right;">
+-12289.05
+</td>
+<td style="text-align:right;">
+1957.840
+</td>
+<td style="text-align:right;">
+7986.893
+</td>
+<td style="text-align:right;">
+1814.2842
+</td>
+<td style="text-align:right;">
+24578.09
+</td>
+<td style="text-align:right;">
+3915.681
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+model1
+</td>
+<td style="text-align:right;">
+-9587.187
+</td>
+<td style="text-align:right;">
+1796.4100
+</td>
+<td style="text-align:right;">
+-20377.33
+</td>
+<td style="text-align:right;">
+3343.991
+</td>
+<td style="text-align:right;">
+1669.282
+</td>
+<td style="text-align:right;">
+303.8157
+</td>
+<td style="text-align:right;">
+40754.65
+</td>
+<td style="text-align:right;">
+6687.983
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="fruits-2" class="section level3">
+<h3><span class="header-section-number">3.3.2</span> Fruits</h3>
+<p><img src="mangrove_files/figure-html/hiercovOutFullFruits-1.png" width="768" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+elpd_diff
+</th>
+<th style="text-align:right;">
+se_diff
+</th>
+<th style="text-align:right;">
+elpd_loo
+</th>
+<th style="text-align:right;">
+se_elpd_loo
+</th>
+<th style="text-align:right;">
+p_loo
+</th>
+<th style="text-align:right;">
+se_p_loo
+</th>
+<th style="text-align:right;">
+looic
+</th>
+<th style="text-align:right;">
+se_looic
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+model2
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.000000
+</td>
+<td style="text-align:right;">
+-855.3560
+</td>
+<td style="text-align:right;">
+94.03550
+</td>
+<td style="text-align:right;">
+132.7910
+</td>
+<td style="text-align:right;">
+28.66924
+</td>
+<td style="text-align:right;">
+1710.712
+</td>
+<td style="text-align:right;">
+188.0710
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+model3
+</td>
+<td style="text-align:right;">
+-0.4717859
+</td>
+<td style="text-align:right;">
+1.800428
+</td>
+<td style="text-align:right;">
+-855.8278
+</td>
+<td style="text-align:right;">
+94.44493
+</td>
+<td style="text-align:right;">
+134.9296
+</td>
+<td style="text-align:right;">
+30.39393
+</td>
+<td style="text-align:right;">
+1711.656
+</td>
+<td style="text-align:right;">
+188.8899
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+model1
+</td>
+<td style="text-align:right;">
+-910.8262819
+</td>
+<td style="text-align:right;">
+184.234312
+</td>
+<td style="text-align:right;">
+-1766.1823
+</td>
+<td style="text-align:right;">
+249.51628
+</td>
+<td style="text-align:right;">
+160.5949
+</td>
+<td style="text-align:right;">
+31.22343
+</td>
+<td style="text-align:right;">
+3532.365
+</td>
+<td style="text-align:right;">
+499.0326
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="exploratory-models.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="hierarchical-positive.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
